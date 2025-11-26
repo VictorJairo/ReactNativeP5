@@ -1,7 +1,34 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import {db} from '../config/firebaseConfig'
+import { collection, getDoc, getDocs } from 'firebase/firestore'
 
 const HomeScreen = ({ navigation }) => {
+
+  const [courses, setCourses] = useState([])
+  const [loading, setloading] = useState(true)
+  useState [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "cursos"))
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data() 
+        }))
+        setCourses(data)
+
+      } catch (error) {
+        console.error("Erro ao buscar cursos no Firestore", error)
+        setError("Não foi possível carregar os cursos. Tente novamente.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCourses()
+  }, [])
+
   
       const items = [
         { id: '1', name: 'Curso de React Native', description: 'Aprenda a criar apps para Android e iOS' },
@@ -20,7 +47,7 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>📚 Cursos Disponíveis</Text>
       <FlatList
-        data={items}
+        data={courses}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
             <TouchableOpacity style={styles.itemContainer} onPress={ () => goToDetailScreen(item) }>
